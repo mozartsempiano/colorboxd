@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorboxd - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #111827;
+            color: white;
+        }
+        .container {
+            background: #1f2937;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            background: #374151;
+            color: white;
+            border: 1px solid #4b5563;
+            border-radius: 4px;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            background: #374151;
+            color: white;
+            border: 1px solid #4b5563;
+            border-radius: 4px;
+        }
+        #result {
+            background: #374151;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            min-height: 50px;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .online { background: #10b981; }
+        .offline { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>🎬 Colorboxd - Test Page</h1>
+    
+    <div class="container">
+        <h2>API Status</h2>
+        <p>SortList (8080): <span id="sortStatus" class="status offline">Checking...</span></p>
+        <p>WriteList (8090): <span id="writeStatus" class="status offline">Checking...</span></p>
+        <button onclick="checkAPIs()">Check APIs</button>
+    </div>
+
+    <div class="container">
+        <h2>Test WriteList (Your Fix)</h2>
+        <p>Para testar sua correção do EntryID, cole um JSON de lista aqui:</p>
+        <textarea id="testData" placeholder='{"accessToken":"token","list":{"id":"123","version":1,"entries":[{"entryID":"e31bb860","filmID":"film1"},{"entryID":"abc123","filmID":"film2"}]},"offset":0,"sortMethod":"hue","reverse":false}'></textarea>
+        <br>
+        <button onclick="testWriteList()">Test WriteList Fix</button>
+        
+        <h3>Result:</h3>
+        <div id="result">Click "Test WriteList Fix" to see results...</div>
+    </div>
+
+    <div class="container">
+        <h2>Test SortList</h2>
+        <input type="text" id="listId" placeholder="List ID (e.g. 12345)" style="width: 200px;">
+        <button onclick="testSortList()">Test SortList</button>
+        
+        <h3>Result:</h3>
+        <div id="sortResult">Enter a List ID and click "Test SortList"...</div>
+    </div>
+
+    <script>
+        async function checkAPIs() {
+            // Check SortList
+            try {
+                const response = await fetch('http://localhost:8080/healthcheck');
+                document.getElementById('sortStatus').textContent = 'Online';
+                document.getElementById('sortStatus').className = 'status online';
+            } catch (e) {
+                document.getElementById('sortStatus').textContent = 'Offline';
+                document.getElementById('sortStatus').className = 'status offline';
+            }
+
+            // Check WriteList  
+            try {
+                const response = await fetch('http://localhost:8090/healthcheck');
+                document.getElementById('writeStatus').textContent = 'Online';
+                document.getElementById('writeStatus').className = 'status online';
+            } catch (e) {
+                document.getElementById('writeStatus').textContent = 'Offline';
+                document.getElementById('writeStatus').className = 'status offline';
+            }
+        }
+
+        async function testWriteList() {
+            const data = document.getElementById('testData').value;
+            if (!data) {
+                document.getElementById('result').textContent = 'Please enter test data';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8090/WriteList', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: data
+                });
+
+                const result = await response.text();
+                document.getElementById('result').textContent = `Status: ${response.status}\n\nResponse:\n${result}`;
+            } catch (error) {
+                document.getElementById('result').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testSortList() {
+            const listId = document.getElementById('listId').value;
+            if (!listId) {
+                document.getElementById('sortResult').textContent = 'Please enter a List ID';
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8080/SortListById/${listId}`);
+                const result = await response.text();
+                document.getElementById('sortResult').textContent = `Status: ${response.status}\n\nResponse:\n${result}`;
+            } catch (error) {
+                document.getElementById('sortResult').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Check APIs on load
+        window.onload = checkAPIs;
+    </script>
+</body>
+</html>

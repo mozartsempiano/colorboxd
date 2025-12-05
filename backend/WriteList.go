@@ -91,10 +91,7 @@ func prepareListUpdateRequest(list ListWithEntries, offset int, sortMethod strin
 	var finishSlice []FilmTargetPosition
 
 	for i, entry := range list.Entries {
-		initPos, err := strconv.Atoi(entry.EntryID)
-		if err != nil {
-			return nil, err
-		}
+		initPos := i + 1
 		endPos := ((i + n) - offset) % n
 		if reverse {
 			endPos = (n - endPos) % n
